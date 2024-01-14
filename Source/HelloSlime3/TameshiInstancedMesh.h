@@ -98,7 +98,7 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void AddInstancesBySplitTime(const TArray<FTransform>& InstancesTransform, int StartIndex, int& CompleteCount, int OrderDiv, float TickTime);
 	UFUNCTION(BlueprintCallable)
-	void SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint);
+	void SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint, float Hight);
 };
 
 class FSyncMapGenerator : public FPendingLatentAction

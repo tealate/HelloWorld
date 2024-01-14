@@ -264,6 +264,7 @@ void UTameshiInstancedMesh::CreateMapPointArray(UObject* WorldContextObject, FLa
         for(int j = 0; j < DefArray.Size; j++)
         {
             MyArray.PointArray[i][j] = DefArray.PointArray[i][j];
+            MyArray.PointArray[i][j].Point = DefArray.PointArray[i][j].Point;
         }
     }
     if(MyArray.PointArray.Num() == 0)
@@ -325,7 +326,7 @@ void UTameshiInstancedMesh::CreateMeshDataArrayOrder(const FMapPointArray& SetAr
     for(int i = 0; i < OrderList.Num(); i++)
     {
         ScaleArray.Add(FVector(1,1,SetArray.PointArray[OrderList[i].x][OrderList[i].y].Point));
-        LocateArray.Add(FVector(FirstPoint.X + Scale * OrderList[i].x, FirstPoint.Y + Scale * OrderList[i].y, SetArray.PointArray[OrderList[i].x][OrderList[i].y].Point));
+        LocateArray.Add(FVector(FirstPoint.X + Scale * OrderList[i].x, FirstPoint.Y + Scale * OrderList[i].y, FirstPoint.Z + SetArray.PointArray[OrderList[i].x][OrderList[i].y].Point));
     }
 }
 //VertPoint:地形の途中データ、MyPoint:自分の座標？中心座標、試しに中心から生成（通常のアルゴリズム）試すためのやつ、使うな、DeltaMin:高低差の最小値、DeltaMax:高低差の最大値、FirstPoint:地形の中心座標、OrderList:計算順に並べた座標のリスト、生成するときに使う
@@ -368,7 +369,7 @@ void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float Del
                 {
                     if(!VertPoint.PointArray[MyTaskList[0][i].x + x - 1][MyTaskList[0][i].y + y - 1].IsNotNull && !VertPoint.PointArray[MyTaskList[0][i].x + x - 1][MyTaskList[0][i].y + y - 1].IsHoll)
                     {
-                        UE_LOG(LogTemp, Display, TEXT("AddTask:%d,%d"),MyTaskList[0][i].x + x - 1,MyTaskList[0][i].y + y - 1);
+                        //UE_LOG(LogTemp, Display, TEXT("AddTask:%d,%d"),MyTaskList[0][i].x + x - 1,MyTaskList[0][i].y + y - 1);
                         MyTaskList[1].Add(FMapLocate{MyTaskList[0][i].x + x - 1,MyTaskList[0][i].y + y - 1});
                     }
                 }
@@ -393,11 +394,13 @@ void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float Del
             {
                 OrderList.Add(MyTaskList[(i+1)%3][j]);
                 InductiveMapPartsGeneratorCircle(VertPoint, MyTaskList[(i+1)%3][j], DeltaMin, DeltaMax, FirstPoint, MyTaskList[(i+2)%3], MyTaskList[i%3]);
+                MyTaskList[i%3].Add(MyTaskList[(i+1)%3][j]);
             }
         }
         if(MyTaskList[(i+2)%3].Num() == 0)break;
         MyTaskList[i%3].Empty();
     }
+    UE_LOG(LogTemp, Display, TEXT("Nanka:%f"),VertPoint.PointArray[90][0].Point);
     *Complete = true;
     UE_LOG(LogTemp, Display, TEXT("Time:%f"),FPlatformTime::Seconds() - timecount);
 }
@@ -405,6 +408,11 @@ void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float Del
 void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList)
 {
     //DeltaMaxは高低差の最大値Deltamaxは高さの最大値、ややこしいね
+    if(VertPoint.PointArray[MyPoint.x][MyPoint.y].IsNotNull)
+    {
+        UE_LOG(LogTemp, Display, TEXT("VertPointNotNull:%d,%d"),MyPoint.x,MyPoint.y);
+        return;
+    }
     int amount = VertPoint.PointArray.Num();
     int Sidecount = 0;
     float sum = 0;
@@ -436,6 +444,7 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
                     {
                         MyDelta = VertPoint.PointArray[MyPoint.x + i][MyPoint.y + j].Point - VertPoint.PointArray[MyPoint.x + i*2][MyPoint.y + j*2].Point;//なんて言えばいいんだこれ、なんか積分みたいなやつ
                         //隣があった場合、そのさらに隣のマスの高さとの差を取る、これがデルタの最大値、最小値になる
+                        //よく考えるとこれいらんかも、起伏作るためのものだけど、起伏というか山とかの形はVertPoint配列で先指定すればいいので
                         if(Deltamax < MyDelta)Deltamax = MyDelta;
                         if(Deltamin > MyDelta)Deltamin = MyDelta;
                     }
@@ -448,6 +457,33 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
     else {
         UE_LOG(LogTemp, Display, TEXT("Sidecount0"));
         return;
+    }
+
+
+    //DefListのやつからデルタを下げる
+    int Distance = 0;
+    float ThisDelta = 0;
+    bool SetDelMax = false;
+    bool SetDelMin = false;
+    for(int i = 0; i < DefList.Num(); i++)
+    {
+        Distance = FMath::Max(FMath::Abs(DefList[i].x - MyPoint.x),FMath::Abs(DefList[i].y - MyPoint.y));
+        if(Distance == 0)continue;
+        Distance = 1 + ((Distance-1)/5);
+        ThisDelta = VertPoint.PointArray[DefList[i].x][DefList[i].y].Point - VertPoint.PointArray[MyPoint.x][MyPoint.y].Point;
+        if(FMath::Abs(ThisDelta/Distance) < DeltaMin)continue;
+        if(ThisDelta > 0 && Deltamin < ThisDelta - DeltaMax*Distance)
+        {
+            Deltamin = ThisDelta - DeltaMax*Distance;
+            SetDelMin = true;
+        }
+        else if(ThisDelta < 0 && Deltamax > ThisDelta + DeltaMax*Distance)
+        {
+            Deltamax = ThisDelta + DeltaMax*Distance;
+            SetDelMax = true;
+        }
+        if(!SetDelMax && Deltamax < ThisDelta/Distance)Deltamax = ThisDelta/Distance;
+        if(!SetDelMin && Deltamin > ThisDelta/Distance)Deltamin = ThisDelta/Distance;
     }
     if(-DeltaMax > Deltamin)Deltamin = -DeltaMax;
     if(DeltaMax < Deltamax)Deltamax = DeltaMax;
@@ -510,7 +546,7 @@ void UTameshiInstancedMesh::AddInstancesBySplitTime(const TArray<FTransform>& In
         }
     }
 }
-void UTameshiInstancedMesh::SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint)
+void UTameshiInstancedMesh::SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint, float Hight)
 {
     if(DefArray.PointArray.Num() == 0)
     {
@@ -518,12 +554,15 @@ void UTameshiInstancedMesh::SampleDefMapMaker(FMapPointArray& SetArray, const FV
         return;
     }
     SetArray = DefArray;
-    SetArray.PointArray[0][0].Point = FirstPoint.Z;
-    SetArray.PointArray[0][0].IsNotNull = true;
-    SetArray.PointArray[0][0].IsHoll = false;
-    DefPoint.Add(FMapLocate{0,0});
-    SetArray.PointArray[50][50].Point = FirstPoint.Z;
-    SetArray.PointArray[50][50].IsNotNull = true;
-    SetArray.PointArray[50][50].IsHoll = false;
-    DefPoint.Add(FMapLocate{50,50});
+    for(int i = 0; i < 80; i++)
+    {
+        SetArray.PointArray[0][i].Point = FirstPoint.Z;
+        SetArray.PointArray[0][i].IsNotNull = true;
+        SetArray.PointArray[0][i].IsHoll = false;
+        DefPoint.Add(FMapLocate{0,i});
+        SetArray.PointArray[90][i].Point = Hight;
+        SetArray.PointArray[90][i].IsNotNull = true;
+        SetArray.PointArray[90][i].IsHoll = false;
+        DefPoint.Add(FMapLocate{90,i});
+    }
 }

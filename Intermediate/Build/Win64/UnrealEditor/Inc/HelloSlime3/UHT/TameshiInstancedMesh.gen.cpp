@@ -284,9 +284,10 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		P_GET_STRUCT_REF(FVector,Z_Param_Out_FirstPoint);
 		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_DefArray);
 		P_GET_TARRAY_REF(FMapLocate,Z_Param_Out_DefPoint);
+		P_GET_PROPERTY(FFloatProperty,Z_Param_Hight);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->SampleDefMapMaker(Z_Param_Out_SetArray,Z_Param_Out_FirstPoint,Z_Param_Out_DefArray,Z_Param_Out_DefPoint);
+		P_THIS->SampleDefMapMaker(Z_Param_Out_SetArray,Z_Param_Out_FirstPoint,Z_Param_Out_DefArray,Z_Param_Out_DefPoint,Z_Param_Hight);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(UTameshiInstancedMesh::execAddInstancesBySplitTime)
@@ -786,6 +787,7 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 			FVector FirstPoint;
 			FMapPointArray DefArray;
 			TArray<FMapLocate> DefPoint;
+			float Hight;
 		};
 		static const UECodeGen_Private::FStructPropertyParams NewProp_SetArray;
 #if WITH_METADATA
@@ -798,6 +800,7 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		static const UECodeGen_Private::FStructPropertyParams NewProp_DefArray;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_DefPoint_Inner;
 		static const UECodeGen_Private::FArrayPropertyParams NewProp_DefPoint;
+		static const UECodeGen_Private::FFloatPropertyParams NewProp_Hight;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
@@ -819,12 +822,14 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray = { "DefArray", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, DefArray), Z_Construct_UScriptStruct_FMapPointArray, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray_MetaData) }; // 3534224835
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint_Inner = { "DefPoint", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(0, nullptr) }; // 3310570964
 	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint = { "DefPoint", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, DefPoint), EArrayPropertyFlags::None, METADATA_PARAMS(0, nullptr) }; // 3310570964
+	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_Hight = { "Hight", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, Hight), METADATA_PARAMS(0, nullptr) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_SetArray,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_Hight,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::Function_MetaDataParams[] = {
@@ -940,7 +945,7 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray, "CreateMapPointArray" }, // 1045852476
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArray, "CreateMeshDataArray" }, // 1475672562
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder, "CreateMeshDataArrayOrder" }, // 2159918692
-		{ &Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker, "SampleDefMapMaker" }, // 2377415072
+		{ &Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker, "SampleDefMapMaker" }, // 2518105459
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_SetFMapPointArray, "SetFMapPointArray" }, // 1890134610
 	};
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UTameshiInstancedMesh_Statics::FuncInfo) < 2048);
@@ -1053,9 +1058,9 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		{ FMapPointArray::StaticStruct, Z_Construct_UScriptStruct_FMapPointArray_Statics::NewStructOps, TEXT("MapPointArray"), &Z_Registration_Info_UScriptStruct_MapPointArray, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FMapPointArray), 3534224835U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UTameshiInstancedMesh, UTameshiInstancedMesh::StaticClass, TEXT("UTameshiInstancedMesh"), &Z_Registration_Info_UClass_UTameshiInstancedMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTameshiInstancedMesh), 1209306755U) },
+		{ Z_Construct_UClass_UTameshiInstancedMesh, UTameshiInstancedMesh::StaticClass, TEXT("UTameshiInstancedMesh"), &Z_Registration_Info_UClass_UTameshiInstancedMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTameshiInstancedMesh), 134927712U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_3921117740(TEXT("/Script/HelloSlime3"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_2398243243(TEXT("/Script/HelloSlime3"),
 		Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ScriptStructInfo),
 		nullptr, 0);
