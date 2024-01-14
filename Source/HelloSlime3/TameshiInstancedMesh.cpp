@@ -5,7 +5,7 @@
 #include "Async/Async.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include <future>
-
+#include "Containers/ArrayView.h"
 #include "TameshiInstancedMesh.h"
 
 UTameshiInstancedMesh::UTameshiInstancedMesh()
@@ -242,7 +242,7 @@ TArray<TArray<FVector>> UTameshiInstancedMesh::MapPointToVector(FMapPoint**& Ver
     return VertPointVec;
 }
 
-void UTameshiInstancedMesh::CreateMapPointArray(UObject* WorldContextObject, FLatentActionInfo LatentInfo, const FMapPointArray& DefArray, FMapPointArray& MyArray, const FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList)
+void UTameshiInstancedMesh::CreateMapPointArray(UObject* WorldContextObject, FLatentActionInfo LatentInfo, const FMapPointArray& DefArray, FMapPointArray& MyArray, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint = TArray<FMapLocate>(), const FMapLocate& StartPoint = FMapLocate{-1,0})
 {
     MyArray.Size = DefArray.Size;
     if(DefArray.PointArray.Num() == 0)
@@ -271,10 +271,11 @@ void UTameshiInstancedMesh::CreateMapPointArray(UObject* WorldContextObject, FLa
         UE_LOG(LogTemp, Display, TEXT("ArrayNullatCreateMapPointArray3"));
         return;
     }
+    OrderList = DefPoint;
     if(UWorld* World=GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-		LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID, new FSyncMapGenerator(LatentInfo, MyArray, MyPoint, DeltaMin, DeltaMax, FirstPoint, OrderList));
+		LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID, new FSyncMapGenerator(LatentInfo, MyArray, DeltaMin, DeltaMax, FirstPoint, OrderList, DefPoint, StartPoint));
 	}
 }
 void UTameshiInstancedMesh::SetFMapPointArray(FMapPointArray& SetArray, const FMapPointArray& DefArray)
@@ -314,7 +315,7 @@ void UTameshiInstancedMesh::CreateMeshDataArray(const FMapPointArray& SetArray, 
 
 }
 
-void UTameshiInstancedMesh::CreateMeshDataArrayOrder(const FMapPointArray& SetArray, TArray<FVector>& ScaleArray, TArray<FVector>& LocateArray, const FVector& FirstPoint, const FMapLocate& FirstDex, float Scale,const TArray<FMapLocate>& OrderList)
+void UTameshiInstancedMesh::CreateMeshDataArrayOrder(const FMapPointArray& SetArray, TArray<FVector>& ScaleArray, TArray<FVector>& LocateArray, const FVector& FirstPoint,float Scale,const TArray<FMapLocate>& OrderList)
 {
     if(SetArray.PointArray.Num() == 0)
     {
@@ -327,51 +328,86 @@ void UTameshiInstancedMesh::CreateMeshDataArrayOrder(const FMapPointArray& SetAr
         LocateArray.Add(FVector(FirstPoint.X + Scale * OrderList[i].x, FirstPoint.Y + Scale * OrderList[i].y, SetArray.PointArray[OrderList[i].x][OrderList[i].y].Point));
     }
 }
-
-FSyncMapGenerator::FSyncMapGenerator(const FLatentActionInfo& LatentInfo, FMapPointArray& VertPoint , FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList) : m_LatentInfo(LatentInfo)
+//VertPoint:地形の途中データ、MyPoint:自分の座標？中心座標、試しに中心から生成（通常のアルゴリズム）試すためのやつ、使うな、DeltaMin:高低差の最小値、DeltaMax:高低差の最大値、FirstPoint:地形の中心座標、OrderList:計算順に並べた座標のリスト、生成するときに使う
+FSyncMapGenerator::FSyncMapGenerator(const FLatentActionInfo& LatentInfo, FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint = TArray<FMapLocate>(), const FMapLocate& StartPoint = FMapLocate{-1,0}) : m_LatentInfo(LatentInfo)
 {
     *Complete = false;
-    SyncMapGeneratorHub(VertPoint,MyPoint,DeltaMin,DeltaMax,FirstPoint,OrderList);
+    SyncMapGeneratorHub(VertPoint,DeltaMin,DeltaMax,FirstPoint,OrderList,DefPoint,StartPoint);
 }
 
-void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList)
+void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint,TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint = TArray<FMapLocate>(), const FMapLocate& StartPoint = FMapLocate{-1,0})
 {
-    TArray<FMapLocate> MyTaskList;
-    MyTaskList.Add(MyPoint);
-    TArray<FMapLocate> DefList;
-    //すでに入っているやつを別で保存
-    for(int i = 0; i < VertPoint.Size; i++)
-    {
-        for(int j = 0; j < VertPoint.Size; j++)
+    double timecount = FPlatformTime::Seconds();
+    TArray<TArray<FMapLocate>> MyTaskList;
+    for(int i = 0; i < 3; i++)MyTaskList.Add(TArray<FMapLocate>());
+    if(DefPoint.Num() != 0)MyTaskList[0] = DefPoint;
+    else{
+        for(int i = 0; i < VertPoint.Size; i++)
         {
-            if(VertPoint.PointArray[i][j].IsNotNull && !VertPoint.PointArray[i][j].IsHoll)
+            for(int j = 0; j < VertPoint.Size; j++)
             {
-                DefList.Add(FMapLocate{i,j});
+                if(VertPoint.PointArray[i][j].IsNotNull && !VertPoint.PointArray[i][j].IsHoll)
+                {
+                    MyTaskList[0].Add(FMapLocate{i,j});
+                }
             }
         }
     }
-    for(;MyTaskList.Num() > 0;)
+    if(MyTaskList[0].Num() == 0)
     {
-        if(VertPoint.PointArray[MyTaskList[0].x][MyTaskList[0].y].IsNotNull)
+        UE_LOG(LogTemp, Display, TEXT("ArrayNull at SyncMapGeneratorHub"));
+        return;
+    }
+    for(int i = 0; i < MyTaskList[0].Num(); i++)
+    {
+        for(int x = 0; x < 3; x++)
         {
-            MyTaskList.RemoveAt(0);
-        }
-        else 
-        {
-            OrderList.Add(MyTaskList[0]);
-            InductiveMapPartsGeneratorCircle(VertPoint, MyTaskList[0], DeltaMin, DeltaMax, FirstPoint, MyTaskList, DefList);
+            for(int y = 0; y < 3; y++)
+            {
+                if(MyTaskList[0][i].x + x - 1 >= 0 && MyTaskList[0][i].x + x - 1 < VertPoint.Size && MyTaskList[0][i].y + y - 1 >= 0 && MyTaskList[0][i].y + y - 1 < VertPoint.Size)
+                {
+                    if(!VertPoint.PointArray[MyTaskList[0][i].x + x - 1][MyTaskList[0][i].y + y - 1].IsNotNull && !VertPoint.PointArray[MyTaskList[0][i].x + x - 1][MyTaskList[0][i].y + y - 1].IsHoll)
+                    {
+                        UE_LOG(LogTemp, Display, TEXT("AddTask:%d,%d"),MyTaskList[0][i].x + x - 1,MyTaskList[0][i].y + y - 1);
+                        MyTaskList[1].Add(FMapLocate{MyTaskList[0][i].x + x - 1,MyTaskList[0][i].y + y - 1});
+                    }
+                }
+            }
         }
     }
+    UE_LOG(LogTemp, Display, TEXT("TaskList0:%d"),MyTaskList[0].Num());
+    UE_LOG(LogTemp, Display, TEXT("TaskList1:%d"),MyTaskList[1].Num());
+    //InductiveMapPartsGeneratorCircleに自己再起させると座標指定の順番キショいので、段階的？に呼び出している
+    //自己再起だと呼び出し地点から一番遠いところからわけわからん順番
+    //今のだとInductive以下略でタスク追加させて、また塊で呼び出してなので呼び出し地点から円形？に呼び出している
+    //リストを毎回入れなおすと重いのでその防止のためだいぶ汚いコード、以下に説明
+    //MyTaskListを三つ用意、座標を決定するための参照するリスト、座標を決めるタスクのリスト、次の座標を決めるためのリスト
+    //MyTaskList[i]を処理する場合はi-1を計算に必要な座標リスト、i+1を次の計算タスクリストとして使う
+    for(int i = 0;true;i++){
+        for(int j = 0; j < MyTaskList[(i+1)%3].Num(); j++){
+            if(VertPoint.PointArray[MyTaskList[(i+1)%3][j].x][MyTaskList[(i+1)%3][j].y].IsNotNull)
+            {
+                continue;
+            }
+            else 
+            {
+                OrderList.Add(MyTaskList[(i+1)%3][j]);
+                InductiveMapPartsGeneratorCircle(VertPoint, MyTaskList[(i+1)%3][j], DeltaMin, DeltaMax, FirstPoint, MyTaskList[(i+2)%3], MyTaskList[i%3]);
+            }
+        }
+        if(MyTaskList[(i+2)%3].Num() == 0)break;
+        MyTaskList[i%3].Empty();
+    }
     *Complete = true;
+    UE_LOG(LogTemp, Display, TEXT("Time:%f"),FPlatformTime::Seconds() - timecount);
 }
 
-void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, const TArray<FMapLocate>& DefList)
+void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList)
 {
     //DeltaMaxは高低差の最大値Deltamaxは高さの最大値、ややこしいね
-    UE_LOG(LogTemp, Display, TEXT("InductiveMapPartsGeneratorCircle"));
     int amount = VertPoint.PointArray.Num();
-    int Sidecount = 1;
-    float sum = FirstPoint.Z;
+    int Sidecount = 0;
+    float sum = 0;
     float Deltamax = DeltaMin;
     float Deltamin = -DeltaMin;
     float Delta = 0;
@@ -407,21 +443,17 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
             }
         }
     }
-    if(sum != 0)VertPoint.PointArray[MyPoint.x][MyPoint.y].Point = sum / Sidecount;
-    else VertPoint.PointArray[MyPoint.x][MyPoint.y].Point = 0;
+
+    if(Sidecount != 0)VertPoint.PointArray[MyPoint.x][MyPoint.y].Point = sum / Sidecount;
+    else {
+        UE_LOG(LogTemp, Display, TEXT("Sidecount0"));
+        return;
+    }
     if(-DeltaMax > Deltamin)Deltamin = -DeltaMax;
     if(DeltaMax < Deltamax)Deltamax = DeltaMax;
     Delta = FMath::RandRange(Deltamin, Deltamax);
-    UE_LOG(LogTemp, Display, TEXT("DeltaMin:%f,DeltaMax:%f,Delta:%f"),Deltamin,Deltamax,Delta);
     VertPoint.PointArray[MyPoint.x][MyPoint.y].Point += Delta;
     VertPoint.PointArray[MyPoint.x][MyPoint.y].IsNotNull = true;
-    for(int i = -1; i <= 1; i++)
-    {
-        for(int j = -1; j <= 1; j++)
-        {
-            UE_LOG(LogTemp, Display, TEXT("SideCall:%d,%d = %d"),i,j,SideCall[i+1][j+1]);
-        }
-    }
     for(int i = -1; i <= 1; i++)
     {
         for(int j = -1; j <= 1;j++)
@@ -429,7 +461,6 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
             if(SideCall[i+1][j+1])
             {
                 MyTaskList.Add(FMapLocate{MyPoint.x + i, MyPoint.y + j});
-                UE_LOG(LogTemp, Display, TEXT("MyTaskListAdd:%d,%d"),MyPoint.x + i, MyPoint.y + j);
             }
         }
     }
@@ -438,4 +469,61 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
 void FSyncMapGenerator::UpdateOperation(FLatentResponse& Response)
 {
     Response.FinishAndTriggerIf(*Complete, m_LatentInfo.ExecutionFunction, m_LatentInfo.Linkage, m_LatentInfo.CallbackTarget);
+}
+
+void UTameshiInstancedMesh::AddInstancesBySplitTime(const TArray<FTransform>& InstancesTransform, int StartIndex, int& CompleteCount, int OrderDiv, float TickTime)
+{
+    CompleteCount = 0;
+    if(InstancesTransform.Num() <= StartIndex)return;
+    TFuture<void> MyAsyncTask = Async(EAsyncExecution::ThreadPool, [TickTime]()
+    {
+        FPlatformProcess::Sleep(TickTime);
+    });
+    int Sdex = StartIndex;
+    int Anum = InstancesTransform.Num() - 1;
+    while(true)
+    {
+        if(MyAsyncTask.IsReady())break;
+        if(Sdex + OrderDiv > Anum)
+        {
+            //TArray<FTransform> InstancesArray(InstancesTransform.GetData() + Sdex, Anum - Sdex + 1);
+            TArray<FTransform> InstancesArray;
+            for(int i = Sdex; i <= Anum; i++)
+            {
+                InstancesArray.Add(InstancesTransform[i]);
+            }
+            AddInstances(InstancesArray, false);
+            CompleteCount += Anum - Sdex + 1;
+            break;
+        }
+        else
+        {
+            //TArray<FTransform> InstancesArray(InstancesTransform.GetData() + Sdex, OrderDiv);
+            TArray<FTransform> InstancesArray;
+            for(int i = Sdex; i < Sdex + OrderDiv; i++)
+            {
+                InstancesArray.Add(InstancesTransform[i]);
+            }
+            AddInstances(InstancesArray, false);
+            CompleteCount += OrderDiv;
+            Sdex += OrderDiv;
+        }
+    }
+}
+void UTameshiInstancedMesh::SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint)
+{
+    if(DefArray.PointArray.Num() == 0)
+    {
+        UE_LOG(LogTemp, Display, TEXT("ArrayNullatSampleDefMapMaker"));
+        return;
+    }
+    SetArray = DefArray;
+    SetArray.PointArray[0][0].Point = FirstPoint.Z;
+    SetArray.PointArray[0][0].IsNotNull = true;
+    SetArray.PointArray[0][0].IsHoll = false;
+    DefPoint.Add(FMapLocate{0,0});
+    SetArray.PointArray[50][50].Point = FirstPoint.Z;
+    SetArray.PointArray[50][50].IsNotNull = true;
+    SetArray.PointArray[50][50].IsHoll = false;
+    DefPoint.Add(FMapLocate{50,50});
 }

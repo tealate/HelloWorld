@@ -18,7 +18,7 @@ UWorldCreatorHub::UWorldCreatorHub()
 void UWorldCreatorHub::BeginPlay()
 {
 	Super::BeginPlay();
-
+	ChankCreateMan(GetOwner()->GetActorLocation(), true);
 	// ...
 	
 }
@@ -28,7 +28,7 @@ void UWorldCreatorHub::BeginPlay()
 void UWorldCreatorHub::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	if(DrawChank)DebugAtBoxList(&ChankGroupList);
 	// ...
 }
 

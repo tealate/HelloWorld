@@ -61,9 +61,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPoint>()
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FMapPoint_Statics::Struct_MetaDataParams[] = {
 		{ "BlueprintType", "true" },
-#if !UE_BUILD_SHIPPING
-		{ "Comment", "/**\n * \n */" },
-#endif
 		{ "ModuleRelativePath", "TameshiInstancedMesh.h" },
 	};
 #endif
@@ -281,18 +278,40 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		}
 		return Z_Registration_Info_UScriptStruct_MapPointArray.InnerSingleton;
 	}
+	DEFINE_FUNCTION(UTameshiInstancedMesh::execSampleDefMapMaker)
+	{
+		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_SetArray);
+		P_GET_STRUCT_REF(FVector,Z_Param_Out_FirstPoint);
+		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_DefArray);
+		P_GET_TARRAY_REF(FMapLocate,Z_Param_Out_DefPoint);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		P_THIS->SampleDefMapMaker(Z_Param_Out_SetArray,Z_Param_Out_FirstPoint,Z_Param_Out_DefArray,Z_Param_Out_DefPoint);
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(UTameshiInstancedMesh::execAddInstancesBySplitTime)
+	{
+		P_GET_TARRAY_REF(FTransform,Z_Param_Out_InstancesTransform);
+		P_GET_PROPERTY(FIntProperty,Z_Param_StartIndex);
+		P_GET_PROPERTY_REF(FIntProperty,Z_Param_Out_CompleteCount);
+		P_GET_PROPERTY(FIntProperty,Z_Param_OrderDiv);
+		P_GET_PROPERTY(FFloatProperty,Z_Param_TickTime);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		P_THIS->AddInstancesBySplitTime(Z_Param_Out_InstancesTransform,Z_Param_StartIndex,Z_Param_Out_CompleteCount,Z_Param_OrderDiv,Z_Param_TickTime);
+		P_NATIVE_END;
+	}
 	DEFINE_FUNCTION(UTameshiInstancedMesh::execCreateMeshDataArrayOrder)
 	{
 		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_SetArray);
 		P_GET_TARRAY_REF(FVector,Z_Param_Out_ScaleArray);
 		P_GET_TARRAY_REF(FVector,Z_Param_Out_LocateArray);
 		P_GET_STRUCT_REF(FVector,Z_Param_Out_FirstPoint);
-		P_GET_STRUCT_REF(FMapLocate,Z_Param_Out_FirstDex);
 		P_GET_PROPERTY(FFloatProperty,Z_Param_Scale);
 		P_GET_TARRAY_REF(FMapLocate,Z_Param_Out_OrderList);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->CreateMeshDataArrayOrder(Z_Param_Out_SetArray,Z_Param_Out_ScaleArray,Z_Param_Out_LocateArray,Z_Param_Out_FirstPoint,Z_Param_Out_FirstDex,Z_Param_Scale,Z_Param_Out_OrderList);
+		P_THIS->CreateMeshDataArrayOrder(Z_Param_Out_SetArray,Z_Param_Out_ScaleArray,Z_Param_Out_LocateArray,Z_Param_Out_FirstPoint,Z_Param_Scale,Z_Param_Out_OrderList);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(UTameshiInstancedMesh::execSetFMapPointArray)
@@ -323,14 +342,15 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		P_GET_STRUCT(FLatentActionInfo,Z_Param_LatentInfo);
 		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_DefArray);
 		P_GET_STRUCT_REF(FMapPointArray,Z_Param_Out_MyArray);
-		P_GET_STRUCT(FMapLocate,Z_Param_MyPoint);
 		P_GET_PROPERTY(FFloatProperty,Z_Param_DeltaMin);
 		P_GET_PROPERTY(FFloatProperty,Z_Param_DeltaMax);
 		P_GET_STRUCT_REF(FVector,Z_Param_Out_FirstPoint);
 		P_GET_TARRAY_REF(FMapLocate,Z_Param_Out_OrderList);
+		P_GET_TARRAY_REF(FMapLocate,Z_Param_Out_DefPoint);
+		P_GET_STRUCT_REF(FMapLocate,Z_Param_Out_StartPoint);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->CreateMapPointArray(Z_Param_WorldContextObject,Z_Param_LatentInfo,Z_Param_Out_DefArray,Z_Param_Out_MyArray,Z_Param_MyPoint,Z_Param_DeltaMin,Z_Param_DeltaMax,Z_Param_Out_FirstPoint,Z_Param_Out_OrderList);
+		P_THIS->CreateMapPointArray(Z_Param_WorldContextObject,Z_Param_LatentInfo,Z_Param_Out_DefArray,Z_Param_Out_MyArray,Z_Param_DeltaMin,Z_Param_DeltaMax,Z_Param_Out_FirstPoint,Z_Param_Out_OrderList,Z_Param_Out_DefPoint,Z_Param_Out_StartPoint);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(UTameshiInstancedMesh::execCreateInstances)
@@ -346,13 +366,82 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 	{
 		UClass* Class = UTameshiInstancedMesh::StaticClass();
 		static const FNameNativePtrPair Funcs[] = {
+			{ "AddInstancesBySplitTime", &UTameshiInstancedMesh::execAddInstancesBySplitTime },
 			{ "CreateInstances", &UTameshiInstancedMesh::execCreateInstances },
 			{ "CreateMapPointArray", &UTameshiInstancedMesh::execCreateMapPointArray },
 			{ "CreateMeshDataArray", &UTameshiInstancedMesh::execCreateMeshDataArray },
 			{ "CreateMeshDataArrayOrder", &UTameshiInstancedMesh::execCreateMeshDataArrayOrder },
+			{ "SampleDefMapMaker", &UTameshiInstancedMesh::execSampleDefMapMaker },
 			{ "SetFMapPointArray", &UTameshiInstancedMesh::execSetFMapPointArray },
 		};
 		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
+	}
+	struct Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics
+	{
+		struct TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms
+		{
+			TArray<FTransform> InstancesTransform;
+			int32 StartIndex;
+			int32 CompleteCount;
+			int32 OrderDiv;
+			float TickTime;
+		};
+		static const UECodeGen_Private::FStructPropertyParams NewProp_InstancesTransform_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_InstancesTransform_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_InstancesTransform;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_StartIndex;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_CompleteCount;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_OrderDiv;
+		static const UECodeGen_Private::FFloatPropertyParams NewProp_TickTime;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UECodeGen_Private::FFunctionParams FuncParams;
+	};
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform_Inner = { "InstancesTransform", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FTransform, METADATA_PARAMS(0, nullptr) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform = { "InstancesTransform", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms, InstancesTransform), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform_MetaData) };
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_StartIndex = { "StartIndex", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms, StartIndex), METADATA_PARAMS(0, nullptr) };
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_CompleteCount = { "CompleteCount", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms, CompleteCount), METADATA_PARAMS(0, nullptr) };
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_OrderDiv = { "OrderDiv", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms, OrderDiv), METADATA_PARAMS(0, nullptr) };
+	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_TickTime = { "TickTime", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms, TickTime), METADATA_PARAMS(0, nullptr) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_InstancesTransform,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_StartIndex,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_CompleteCount,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_OrderDiv,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::NewProp_TickTime,
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::Function_MetaDataParams[] = {
+#if !UE_BUILD_SHIPPING
+		{ "Comment", "//addinstances\xe3\x82\x92\xe6\x99\x82\xe9\x96\x93\xe3\x81\xa7\xe5\x88\x86\xe5\x89\xb2\xe3\x81\x97\xe3\x81\xa6\xe5\x91\xbc\xe3\x81\xb3\xe5\x87\xba\xe3\x81\x99\xe9\x96\xa2\xe6\x95\xb0\n" },
+#endif
+		{ "ModuleRelativePath", "TameshiInstancedMesh.h" },
+#if !UE_BUILD_SHIPPING
+		{ "ToolTip", "addinstances\xe3\x82\x92\xe6\x99\x82\xe9\x96\x93\xe3\x81\xa7\xe5\x88\x86\xe5\x89\xb2\xe3\x81\x97\xe3\x81\xa6\xe5\x91\xbc\xe3\x81\xb3\xe5\x87\xba\xe3\x81\x99\xe9\x96\xa2\xe6\x95\xb0" },
+#endif
+	};
+#endif
+	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UTameshiInstancedMesh, nullptr, "AddInstancesBySplitTime", nullptr, nullptr, Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::PropPointers), sizeof(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04440401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::Function_MetaDataParams), Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::Function_MetaDataParams) };
+	static_assert(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::PropPointers) < 2048);
+	static_assert(sizeof(Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::TameshiInstancedMesh_eventAddInstancesBySplitTime_Parms) < MAX_uint16);
+	UFunction* Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime_Statics::FuncParams);
+		}
+		return ReturnFunction;
 	}
 	struct Z_Construct_UFunction_UTameshiInstancedMesh_CreateInstances_Statics
 	{
@@ -403,11 +492,12 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 			FLatentActionInfo LatentInfo;
 			FMapPointArray DefArray;
 			FMapPointArray MyArray;
-			FMapLocate MyPoint;
 			float DeltaMin;
 			float DeltaMax;
 			FVector FirstPoint;
 			TArray<FMapLocate> OrderList;
+			TArray<FMapLocate> DefPoint;
+			FMapLocate StartPoint;
 		};
 		static const UECodeGen_Private::FObjectPropertyParams NewProp_WorldContextObject;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_LatentInfo;
@@ -416,10 +506,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_DefArray;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_MyArray;
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_MyPoint_MetaData[];
-#endif
-		static const UECodeGen_Private::FStructPropertyParams NewProp_MyPoint;
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_DeltaMin;
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_DeltaMax;
 #if WITH_METADATA
@@ -428,6 +514,15 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		static const UECodeGen_Private::FStructPropertyParams NewProp_FirstPoint;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_OrderList_Inner;
 		static const UECodeGen_Private::FArrayPropertyParams NewProp_OrderList;
+		static const UECodeGen_Private::FStructPropertyParams NewProp_DefPoint_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_DefPoint_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_DefPoint;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_StartPoint_MetaData[];
+#endif
+		static const UECodeGen_Private::FStructPropertyParams NewProp_StartPoint;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
@@ -443,12 +538,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefArray = { "DefArray", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, DefArray), Z_Construct_UScriptStruct_FMapPointArray, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefArray_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefArray_MetaData) }; // 3534224835
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyArray = { "MyArray", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, MyArray), Z_Construct_UScriptStruct_FMapPointArray, METADATA_PARAMS(0, nullptr) }; // 3534224835
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyPoint_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyPoint = { "MyPoint", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, MyPoint), Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyPoint_MetaData) }; // 3310570964
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DeltaMin = { "DeltaMin", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, DeltaMin), METADATA_PARAMS(0, nullptr) };
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DeltaMax = { "DeltaMax", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, DeltaMax), METADATA_PARAMS(0, nullptr) };
 #if WITH_METADATA
@@ -459,17 +548,32 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_FirstPoint = { "FirstPoint", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, FirstPoint), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_FirstPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_FirstPoint_MetaData) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_OrderList_Inner = { "OrderList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(0, nullptr) }; // 3310570964
 	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_OrderList = { "OrderList", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, OrderList), EArrayPropertyFlags::None, METADATA_PARAMS(0, nullptr) }; // 3310570964
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint_Inner = { "DefPoint", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(0, nullptr) }; // 3310570964
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint = { "DefPoint", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, DefPoint), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint_MetaData) }; // 3310570964
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_StartPoint_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_StartPoint = { "StartPoint", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMapPointArray_Parms, StartPoint), Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_StartPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_StartPoint_MetaData) }; // 3310570964
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_WorldContextObject,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_LatentInfo,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefArray,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyArray,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_MyPoint,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DeltaMin,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DeltaMax,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_FirstPoint,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_OrderList_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_OrderList,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_DefPoint,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::NewProp_StartPoint,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray_Statics::Function_MetaDataParams[] = {
@@ -589,7 +693,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 			TArray<FVector> ScaleArray;
 			TArray<FVector> LocateArray;
 			FVector FirstPoint;
-			FMapLocate FirstDex;
 			float Scale;
 			TArray<FMapLocate> OrderList;
 		};
@@ -605,10 +708,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_FirstPoint_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_FirstPoint;
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_FirstDex_MetaData[];
-#endif
-		static const UECodeGen_Private::FStructPropertyParams NewProp_FirstDex;
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_Scale;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_OrderList_Inner;
 #if WITH_METADATA
@@ -637,12 +736,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstPoint = { "FirstPoint", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMeshDataArrayOrder_Parms, FirstPoint), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstPoint_MetaData) };
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstDex_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstDex = { "FirstDex", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMeshDataArrayOrder_Parms, FirstDex), Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstDex_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstDex_MetaData) }; // 3310570964
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_Scale = { "Scale", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventCreateMeshDataArrayOrder_Parms, Scale), METADATA_PARAMS(0, nullptr) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_OrderList_Inner = { "OrderList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(0, nullptr) }; // 3310570964
 #if WITH_METADATA
@@ -658,7 +751,6 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_LocateArray_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_LocateArray,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstPoint,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_FirstDex,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_Scale,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_OrderList_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::NewProp_OrderList,
@@ -683,6 +775,71 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		if (!ReturnFunction)
 		{
 			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics
+	{
+		struct TameshiInstancedMesh_eventSampleDefMapMaker_Parms
+		{
+			FMapPointArray SetArray;
+			FVector FirstPoint;
+			FMapPointArray DefArray;
+			TArray<FMapLocate> DefPoint;
+		};
+		static const UECodeGen_Private::FStructPropertyParams NewProp_SetArray;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_FirstPoint_MetaData[];
+#endif
+		static const UECodeGen_Private::FStructPropertyParams NewProp_FirstPoint;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_DefArray_MetaData[];
+#endif
+		static const UECodeGen_Private::FStructPropertyParams NewProp_DefArray;
+		static const UECodeGen_Private::FStructPropertyParams NewProp_DefPoint_Inner;
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_DefPoint;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UECodeGen_Private::FFunctionParams FuncParams;
+	};
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_SetArray = { "SetArray", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, SetArray), Z_Construct_UScriptStruct_FMapPointArray, METADATA_PARAMS(0, nullptr) }; // 3534224835
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint = { "FirstPoint", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, FirstPoint), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint_MetaData) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray = { "DefArray", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, DefArray), Z_Construct_UScriptStruct_FMapPointArray, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray_MetaData), Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray_MetaData) }; // 3534224835
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint_Inner = { "DefPoint", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UScriptStruct_FMapLocate, METADATA_PARAMS(0, nullptr) }; // 3310570964
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint = { "DefPoint", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(TameshiInstancedMesh_eventSampleDefMapMaker_Parms, DefPoint), EArrayPropertyFlags::None, METADATA_PARAMS(0, nullptr) }; // 3310570964
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_SetArray,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_FirstPoint,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefArray,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::NewProp_DefPoint,
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::Function_MetaDataParams[] = {
+		{ "ModuleRelativePath", "TameshiInstancedMesh.h" },
+	};
+#endif
+	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UTameshiInstancedMesh, nullptr, "SampleDefMapMaker", nullptr, nullptr, Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::PropPointers), sizeof(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::TameshiInstancedMesh_eventSampleDefMapMaker_Parms), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04C40401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::Function_MetaDataParams), Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::Function_MetaDataParams) };
+	static_assert(UE_ARRAY_COUNT(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::PropPointers) < 2048);
+	static_assert(sizeof(Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::TameshiInstancedMesh_eventSampleDefMapMaker_Parms) < MAX_uint16);
+	UFunction* Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker_Statics::FuncParams);
 		}
 		return ReturnFunction;
 	}
@@ -778,10 +935,12 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 	};
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UTameshiInstancedMesh_Statics::DependentSingletons) < 16);
 	const FClassFunctionLinkInfo Z_Construct_UClass_UTameshiInstancedMesh_Statics::FuncInfo[] = {
+		{ &Z_Construct_UFunction_UTameshiInstancedMesh_AddInstancesBySplitTime, "AddInstancesBySplitTime" }, // 1043304441
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateInstances, "CreateInstances" }, // 1997070363
-		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray, "CreateMapPointArray" }, // 1525455696
+		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMapPointArray, "CreateMapPointArray" }, // 1045852476
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArray, "CreateMeshDataArray" }, // 1475672562
-		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder, "CreateMeshDataArrayOrder" }, // 1462899245
+		{ &Z_Construct_UFunction_UTameshiInstancedMesh_CreateMeshDataArrayOrder, "CreateMeshDataArrayOrder" }, // 2159918692
+		{ &Z_Construct_UFunction_UTameshiInstancedMesh_SampleDefMapMaker, "SampleDefMapMaker" }, // 2377415072
 		{ &Z_Construct_UFunction_UTameshiInstancedMesh_SetFMapPointArray, "SetFMapPointArray" }, // 1890134610
 	};
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UTameshiInstancedMesh_Statics::FuncInfo) < 2048);
@@ -889,14 +1048,14 @@ template<> HELLOSLIME3_API UScriptStruct* StaticStruct<FMapPointArray>()
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FStructRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ScriptStructInfo[] = {
-		{ FMapPoint::StaticStruct, Z_Construct_UScriptStruct_FMapPoint_Statics::NewStructOps, TEXT("MapPoint"), &Z_Registration_Info_UScriptStruct_MapPoint, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FMapPoint), 2057218706U) },
+		{ FMapPoint::StaticStruct, Z_Construct_UScriptStruct_FMapPoint_Statics::NewStructOps, TEXT("MapPoint"), &Z_Registration_Info_UScriptStruct_MapPoint, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FMapPoint), 318524278U) },
 		{ FMapLocate::StaticStruct, Z_Construct_UScriptStruct_FMapLocate_Statics::NewStructOps, TEXT("MapLocate"), &Z_Registration_Info_UScriptStruct_MapLocate, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FMapLocate), 3310570964U) },
 		{ FMapPointArray::StaticStruct, Z_Construct_UScriptStruct_FMapPointArray_Statics::NewStructOps, TEXT("MapPointArray"), &Z_Registration_Info_UScriptStruct_MapPointArray, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FMapPointArray), 3534224835U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UTameshiInstancedMesh, UTameshiInstancedMesh::StaticClass, TEXT("UTameshiInstancedMesh"), &Z_Registration_Info_UClass_UTameshiInstancedMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTameshiInstancedMesh), 3248173263U) },
+		{ Z_Construct_UClass_UTameshiInstancedMesh, UTameshiInstancedMesh::StaticClass, TEXT("UTameshiInstancedMesh"), &Z_Registration_Info_UClass_UTameshiInstancedMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UTameshiInstancedMesh), 1209306755U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_4220480575(TEXT("/Script/HelloSlime3"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_3921117740(TEXT("/Script/HelloSlime3"),
 		Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_CUEProject_HelloSlime3_Source_HelloSlime3_TameshiInstancedMesh_h_Statics::ScriptStructInfo),
 		nullptr, 0);

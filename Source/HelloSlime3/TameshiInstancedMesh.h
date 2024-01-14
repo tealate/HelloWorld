@@ -86,14 +86,19 @@ private:
 	//地形生成:その配列からの距離に応じて乱数値いじったらうまい具合になる？気がする
 	//void RandomMapMaker(FVector** VertPoint,const FVector** ParentVertPoint,const FVector& FirstPoint);
 	UFUNCTION(BlueprintCallable, meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo"))
-	void CreateMapPointArray(UObject* WorldContextObject, FLatentActionInfo LatentInfo, const FMapPointArray& DefArray, FMapPointArray& MyArray, const FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList);
+	void CreateMapPointArray(UObject* WorldContextObject, FLatentActionInfo LatentInfo, const FMapPointArray& DefArray, FMapPointArray& MyArray, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint, const FMapLocate& StartPoint);
 	UFUNCTION(BlueprintCallable)
 	void CreateMeshDataArray(const FMapPointArray& SetArray, TArray<FVector>& ScaleArray, TArray<FVector>& LocateArray,const FVector& FirstPoint,const FMapLocate& FirstDex, float Scale);
 	UFUNCTION(BlueprintCallable)
 	void SetFMapPointArray(FMapPointArray& SetArray, const FMapPointArray& DefArray);
 	//計算順に並べた配列を作る
 	UFUNCTION(BlueprintCallable)
-	void CreateMeshDataArrayOrder(const FMapPointArray& SetArray, TArray<FVector>& ScaleArray, TArray<FVector>& LocateArray, const FVector& FirstPoint, const FMapLocate& FirstDex, float Scale, const TArray<FMapLocate>& OrderList);
+	void CreateMeshDataArrayOrder(const FMapPointArray& SetArray, TArray<FVector>& ScaleArray, TArray<FVector>& LocateArray, const FVector& FirstPoint, float Scale, const TArray<FMapLocate>& OrderList);
+	//addinstancesを時間で分割して呼び出す関数
+	UFUNCTION(BlueprintCallable)
+	void AddInstancesBySplitTime(const TArray<FTransform>& InstancesTransform, int StartIndex, int& CompleteCount, int OrderDiv, float TickTime);
+	UFUNCTION(BlueprintCallable)
+	void SampleDefMapMaker(FMapPointArray& SetArray, const FVector& FirstPoint,const FMapPointArray& DefArray, TArray<FMapLocate>& DefPoint);
 };
 
 class FSyncMapGenerator : public FPendingLatentAction
@@ -103,10 +108,10 @@ class FSyncMapGenerator : public FPendingLatentAction
 	int MaxToken;
 	float m_TotalSecond = 0.0f;
 public :
-	FSyncMapGenerator(const FLatentActionInfo& LatentInfo, FMapPointArray& VertPoint , FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList);
+	FSyncMapGenerator(const FLatentActionInfo& LatentInfo, FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint, const FMapLocate& StartPoint);
 	//再起っぽい何かやるもの、円状に広がる
-	void InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, const TArray<FMapLocate>& DefList);
+	void InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList);
 	//本体、呼び出し、終了の判定と再起処理の呼び出し行う
-	void SyncMapGeneratorHub(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList);
+	void SyncMapGeneratorHub(FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint, const FMapLocate& StartPoint);
 	virtual void UpdateOperation(FLatentResponse& Response) override;
 };

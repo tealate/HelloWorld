@@ -69,7 +69,7 @@ private:
 
 	int counter[5] = {0,0,0,0,0};
 
-	UFUNCTION(BlueprintCallable)
+	//UFUNCTION(BlueprintCallable)
 	void DebugAtBoxList(FChankGroup** MyBoxList);
 	void DebugAtLineList(const TArray<FVector>& LineList);
 	void CityShadowMaker();
