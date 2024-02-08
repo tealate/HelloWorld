@@ -8,4 +8,4 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = HelloSlime3ModuleRules
-build_property.ProjectDir = c:\CEpicLibrary\CUEProject\HelloSlime3\Intermediate\Build\BuildRulesProjects\HelloSlime3ModuleRules\
+build_property.ProjectDir = C:\CEpicLibrary\CUEProject\HelloSlime3\Intermediate\Build\BuildRulesProjects\HelloSlime3ModuleRules\

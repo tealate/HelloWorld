@@ -384,6 +384,7 @@ void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float Del
     //リストを毎回入れなおすと重いのでその防止のためだいぶ汚いコード、以下に説明
     //MyTaskListを三つ用意、座標を決定するための参照するリスト、座標を決めるタスクのリスト、次の座標を決めるためのリスト
     //MyTaskList[i]を処理する場合はi-1を計算に必要な座標リスト、i+1を次の計算タスクリストとして使う
+    int ErCount = 0;
     for(int i = 0;true;i++){
         for(int j = 0; j < MyTaskList[(i+1)%3].Num(); j++){
             if(VertPoint.PointArray[MyTaskList[(i+1)%3][j].x][MyTaskList[(i+1)%3][j].y].IsNotNull)
@@ -392,32 +393,34 @@ void FSyncMapGenerator::SyncMapGeneratorHub(FMapPointArray& VertPoint, float Del
             }
             else 
             {
-                OrderList.Add(MyTaskList[(i+1)%3][j]);
-                InductiveMapPartsGeneratorCircle(VertPoint, MyTaskList[(i+1)%3][j], DeltaMin, DeltaMax, FirstPoint, MyTaskList[(i+2)%3], MyTaskList[i%3]);
+                //OrderList.Add(MyTaskList[(i+1)%3][j]);
+                if(InductiveMapPartsGeneratorCircle(VertPoint, MyTaskList[(i+1)%3][j], DeltaMin, DeltaMax, FirstPoint, MyTaskList[(i+2)%3], MyTaskList[i%3]))OrderList.Add(MyTaskList[(i+1)%3][j]);
+                else ErCount++;
                 MyTaskList[i%3].Add(MyTaskList[(i+1)%3][j]);
             }
         }
         if(MyTaskList[(i+2)%3].Num() == 0)break;
         MyTaskList[i%3].Empty();
     }
+    UE_LOG(LogTemp, Display, TEXT("ErCount:%d"),ErCount);
     UE_LOG(LogTemp, Display, TEXT("Nanka:%f"),VertPoint.PointArray[90][0].Point);
     *Complete = true;
     UE_LOG(LogTemp, Display, TEXT("Time:%f"),FPlatformTime::Seconds() - timecount);
 }
 
-void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList)
+bool FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, const float DeltaMin, const float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList)
 {
     //DeltaMaxは高低差の最大値Deltamaxは高さの最大値、ややこしいね
     if(VertPoint.PointArray[MyPoint.x][MyPoint.y].IsNotNull)
     {
         UE_LOG(LogTemp, Display, TEXT("VertPointNotNull:%d,%d"),MyPoint.x,MyPoint.y);
-        return;
+        return false;
     }
     int amount = VertPoint.PointArray.Num();
     int Sidecount = 0;
     float sum = 0;
-    float Deltamax = DeltaMin;
-    float Deltamin = -DeltaMin;
+    float Deltamax = 0;
+    float Deltamin = 0;
     float Delta = 0;
     bool SideCall[3][3];
     float MyDelta = 0;
@@ -456,37 +459,56 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
     if(Sidecount != 0)VertPoint.PointArray[MyPoint.x][MyPoint.y].Point = sum / Sidecount;
     else {
         UE_LOG(LogTemp, Display, TEXT("Sidecount0"));
-        return;
+        return false;
     }
 
 
     //DefListのやつからデルタを下げる
-    int Distance = 0;
+    float Distance = 0;
     float ThisDelta = 0;
-    bool SetDelMax = false;
-    bool SetDelMin = false;
+    float DeltaMax2 = 100000;
+    float DeltaMin2 = -100000;
     for(int i = 0; i < DefList.Num(); i++)
     {
         Distance = FMath::Max(FMath::Abs(DefList[i].x - MyPoint.x),FMath::Abs(DefList[i].y - MyPoint.y));
         if(Distance == 0)continue;
-        Distance = 1 + ((Distance-1)/5);
+        Distance = 1 + ((Distance-1)/1.5);
         ThisDelta = VertPoint.PointArray[DefList[i].x][DefList[i].y].Point - VertPoint.PointArray[MyPoint.x][MyPoint.y].Point;
-        if(FMath::Abs(ThisDelta/Distance) < DeltaMin)continue;
-        if(ThisDelta > 0 && Deltamin < ThisDelta - DeltaMax*Distance)
+        //if(FMath::Abs(ThisDelta/Distance) < DeltaMin)continue;
+        if(DeltaMin2 < ThisDelta - (DeltaMax*Distance))
         {
-            Deltamin = ThisDelta - DeltaMax*Distance;
-            SetDelMin = true;
+            DeltaMin2 = ThisDelta - (DeltaMax*Distance);
         }
-        else if(ThisDelta < 0 && Deltamax > ThisDelta + DeltaMax*Distance)
+        if(DeltaMax2 > ThisDelta + (DeltaMax*Distance))
         {
-            Deltamax = ThisDelta + DeltaMax*Distance;
-            SetDelMax = true;
+            DeltaMax2 = ThisDelta + (DeltaMax*Distance);
         }
-        if(!SetDelMax && Deltamax < ThisDelta/Distance)Deltamax = ThisDelta/Distance;
-        if(!SetDelMin && Deltamin > ThisDelta/Distance)Deltamin = ThisDelta/Distance;
+        //if(!SetDelMax && Deltamax < ThisDelta/Distance)Deltamax = ThisDelta/Distance;
+        //if(!SetDelMin && Deltamin > ThisDelta/Distance)Deltamin = ThisDelta/Distance;
     }
-    if(-DeltaMax > Deltamin)Deltamin = -DeltaMax;
-    if(DeltaMax < Deltamax)Deltamax = DeltaMax;
+    if(DeltaMin < FMath::Abs(DeltaMin2 - DeltaMax2))
+    {
+        if(DeltaMin2 < -DeltaMin/2 && DeltaMax2 > DeltaMin/2)
+        {
+            DeltaMin2 = (DeltaMin2 + DeltaMax2)/2 - DeltaMin/2;
+            DeltaMax2 = (DeltaMin2 + DeltaMax2)/2 + DeltaMin/2;
+        }
+        else if(DeltaMin2 < DeltaMin)
+        {
+            DeltaMax2 = DeltaMin2 + DeltaMin;
+        }
+        else if(DeltaMax2 > DeltaMax)
+        {
+            DeltaMin2 = DeltaMax2 - DeltaMin;
+        }
+    }
+    if(DeltaMin2 > Deltamin)Deltamin = DeltaMin2;
+    if(DeltaMax2 < Deltamax)Deltamax = DeltaMax2;
+    if(DeltaMin2 > Deltamax)Deltamax = FMath::Min(DeltaMax2, DeltaMin2 + DeltaMin);
+    if(DeltaMax2 < Deltamin)Deltamin = FMath::Max(DeltaMin2, DeltaMax2 - DeltaMin);
+    //if(-DeltaMax > Deltamin || DeltaMax < Deltamax)UE_LOG(LogTemp, Display, TEXT("DameDesu"));
+    //if(-DeltaMax > Deltamin)Deltamin = -DeltaMax;
+    //if(DeltaMax < Deltamax)Deltamax = DeltaMax;
     Delta = FMath::RandRange(Deltamin, Deltamax);
     VertPoint.PointArray[MyPoint.x][MyPoint.y].Point += Delta;
     VertPoint.PointArray[MyPoint.x][MyPoint.y].IsNotNull = true;
@@ -500,6 +522,12 @@ void FSyncMapGenerator::InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoi
             }
         }
     }
+    /*if(DeltaMax2 < DeltaMin2)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Delta:%f"),DeltaMax2 - DeltaMin2);
+        return false;
+    }*/
+    return true;
 }
 
 void FSyncMapGenerator::UpdateOperation(FLatentResponse& Response)
@@ -565,4 +593,8 @@ void UTameshiInstancedMesh::SampleDefMapMaker(FMapPointArray& SetArray, const FV
         SetArray.PointArray[90][i].IsHoll = false;
         DefPoint.Add(FMapLocate{90,i});
     }
+    SetArray.PointArray[40][40].Point = Hight;
+    SetArray.PointArray[40][40].IsNotNull = true;
+    SetArray.PointArray[40][40].IsHoll = false;
+    DefPoint.Add(FMapLocate{40,40});
 }

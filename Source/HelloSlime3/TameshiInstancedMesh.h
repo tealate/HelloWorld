@@ -40,6 +40,26 @@ struct FMapPointArray
 	int Size;
 	TArray<TArray<FMapPoint>> PointArray;
 };
+
+USTRUCT(BlueprintType)
+struct FSampleMapPoint
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere)
+	float Point;
+	UPROPERTY(EditAnywhere)
+	bool IsNotNull = false;
+	UPROPERTY(EditAnywhere)
+	bool IsHoll = false;
+	UPROPERTY(EditAnywhere)
+	int x;
+	UPROPERTY(EditAnywhere)
+	int xlength = x;
+	UPROPERTY(EditAnywhere)
+	int y;
+	UPROPERTY(EditAnywhere)
+	int ylength = y;
+};
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class HELLOSLIME3_API UTameshiInstancedMesh : public UInstancedStaticMeshComponent
 {
@@ -110,7 +130,7 @@ class FSyncMapGenerator : public FPendingLatentAction
 public :
 	FSyncMapGenerator(const FLatentActionInfo& LatentInfo, FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint, const FMapLocate& StartPoint);
 	//再起っぽい何かやるもの、円状に広がる
-	void InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList);
+	bool InductiveMapPartsGeneratorCircle(FMapPointArray& VertPoint, FMapLocate MyPoint, const float DeltaMin, const float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& MyTaskList, TArray<FMapLocate>& DefList);
 	//本体、呼び出し、終了の判定と再起処理の呼び出し行う
 	void SyncMapGeneratorHub(FMapPointArray& VertPoint, float DeltaMin, float DeltaMax, const FVector& FirstPoint, TArray<FMapLocate>& OrderList, const TArray<FMapLocate>& DefPoint, const FMapLocate& StartPoint);
 	virtual void UpdateOperation(FLatentResponse& Response) override;
